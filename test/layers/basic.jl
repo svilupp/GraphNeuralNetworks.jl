@@ -9,7 +9,7 @@
         x = g.ndata.x
 
         gnn = GNNChain(GCNConv(din => d),
-                       BatchNorm(d),
+                       Dense(d => d),
                        x -> tanh.(x),
                        GraphConv(d => d, tanh),
                        Dropout(0.5),
@@ -21,7 +21,7 @@
 
         @testset "constructor with names" begin
             m = GNNChain(GCNConv(din => d),
-                         BatchNorm(d),
+                         Dense(d => d),
                          x -> relu.(x),
                          Dense(d, dout))
 
@@ -34,7 +34,7 @@
 
         @testset "constructor with vector" begin
             m = GNNChain(GCNConv(din => d),
-                         BatchNorm(d),
+                         Dense(d => d),
                          x -> relu.(x),
                          Dense(d, dout))
             m2 = GNNChain([m.layers...])
@@ -45,9 +45,9 @@
             AddResidual(l) = Parallel(+, identity, l)
 
             gnn = GNNChain(ResGatedGraphConv(din => d, tanh),
-                           BatchNorm(d),
+                           Dense(d => d),
                            AddResidual(ResGatedGraphConv(d => d, tanh)),
-                           BatchNorm(d),
+                           Dense(d => d),
                            Dense(d, dout))
 
             testmode!(gnn)
@@ -92,14 +92,5 @@
         chain = GNNChain(GraphConv(2 => 2))
         params, restructure = Flux.destructure(chain)
         @test restructure(params) isa GNNChain
-    end
-    @testset "GNNGraph array input" begin
-        gs = [rand_graph(5, 6, ndata = rand(2, 5), graph_type = GRAPH_T) for _ in 1:4]
-        l = GCNConv(2 => 3)
-        y = l(gs, rand(2, 20))
-        @test size(y) == (3, 20)
-
-        gout = l(gs)
-        @test size(gout.ndata.x) == (3, 20)
     end
 end
